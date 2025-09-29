@@ -33,7 +33,7 @@ def solve_rerun(left, d: List[float] | List[int]) -> Matrix:
 
 
 def solve_simple_iter(left, right: List[float] | List[int],
-                      e: float) -> Tuple[List[float], int]:
+                      e: float, tries: int = 1000) -> Tuple[List[float], int]:
     assert left.cols == left.rows
     for i in range(left.rows):
         if left[i][i] == 0:
@@ -57,7 +57,7 @@ def solve_simple_iter(left, right: List[float] | List[int],
 
     x = b
     i = 0
-    while True:
+    while i != tries:
         i += 1
         x2 = b + a * x
         diff = coef * (x2 - x).normc()
@@ -71,7 +71,7 @@ def solve_simple_iter(left, right: List[float] | List[int],
 
 
 def solve_zeidel(left, right: List[float] | List[int],
-                 e: float) -> Tuple[List[float], int]:
+                 e: float, tries: int = 1000) -> Tuple[List[float], int]:
     assert left.cols == left.rows
     for i in range(left.rows):
         if left[i][i] == 0:
@@ -96,7 +96,7 @@ def solve_zeidel(left, right: List[float] | List[int],
 
     x = b
     n = 0
-    while True:
+    while n != tries:
         n += 1
         x2 = x.copy()
         for i in range(x2.rows):

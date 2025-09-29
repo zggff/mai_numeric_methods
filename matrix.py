@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, Tuple
+import math as m
 
 
 class Matrix:
@@ -219,3 +220,50 @@ class Matrix:
             for j in range(i):
                 res[i][j] = 0
         return res
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Matrix):
+            return False
+        if self.rows != other.rows or self.cols != other.cols:
+            return False
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if self[i][j] != other[i][j]:
+                    return False
+        return True
+
+    def own_rotation(self, precision: float, tries: int = 1000
+                     ) -> Tuple[List[float], Matrix, float]:
+        assert self == self.transpose(), "matrix must be symmetric"
+        assert self.rows > 1
+
+        a = self.copy()
+        itern = 0
+        u0 = Matrix.identity(self.rows)
+        while itern != tries:
+            itern += 1
+            i = 0
+            j = 1
+            for i0 in range(a.rows):
+                for j0 in range(a.rows):
+                    if i0 != j0 and abs(a[i0][j0]) > abs(a[i][j]):
+                        i = i0
+                        j = j0
+            phi = m.pi / 4
+            if abs(a[i][i] - a[j][j]) > precision * 0.1:
+                phi = 1/2 * m.atan(2 * a[i][j] / (a[i][i] - a[j][j]))
+            u = Matrix.identity(self.rows)
+            u[i][i] = m.cos(phi)
+            u[i][j] = -m.sin(phi)
+            u[j][i] = m.sin(phi)
+            u[j][j] = m.cos(phi)
+
+            a = u.transpose() * a * u
+            u0 = u0 * u
+            t = sum(
+                [a[i0][j0] ** 2 for j0 in range(a.rows) for i0 in range(j0)]
+            ) ** (1/2)
+            # print(f"{itern-1} [{t}]:{u.str(4)}{a.str(4)}\n")
+            if t <= precision:
+                break
+        return ([a[i][i] for i in range(a.rows)], u0, itern)
