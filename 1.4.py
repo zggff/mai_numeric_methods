@@ -12,6 +12,6 @@ a = Matrix([
     [-7, -1, 1]
 ])
 
-vals, vectors, n = a.own_rotation(0.03)
+vals, vectors, n = a.eigen_rotation(0.03)
 
 print(f"{n} {vals} {vectors.str()}")

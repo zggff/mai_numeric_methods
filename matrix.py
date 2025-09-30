@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import List, Tuple
 import math as m
+import cmath as cm
 
 
 class Matrix:
@@ -122,7 +123,7 @@ class Matrix:
         return res
 
     def str(self, precision: int = 3) -> str:
-        res = "\n"
+        res = ""
         for row in self.mat:
             res += "|\t"
             for col in row:
@@ -189,8 +190,8 @@ class Matrix:
         appended = self.append_right(Matrix.identity(self.rows))
         return appended.gauss_transform()
 
-    def get_col(self, j: int) -> Matrix:
-        res = Matrix(size=(1, self.cols))
+    def col(self, j: int) -> Matrix:
+        res = Matrix(size=(self.rows, 1))
         res.mat = [[self[i][j]] for i in range(self.rows)]
         return res
 
@@ -232,8 +233,8 @@ class Matrix:
                     return False
         return True
 
-    def own_rotation(self, precision: float, tries: int = 1000
-                     ) -> Tuple[List[float], Matrix, float]:
+    def eigen_rotation(self, precision: float, tries: int = 1000
+                       ) -> Tuple[List[float], Matrix, float]:
         assert self == self.transpose(), "matrix must be symmetric"
         assert self.rows > 1
 
@@ -267,3 +268,69 @@ class Matrix:
             if t <= precision:
                 break
         return ([a[i][i] for i in range(a.rows)], u0, itern)
+
+    def qr(self) -> Tuple[Matrix, Matrix]:
+        assert self.rows == self.cols, "must be a square matrix"
+        r = self.copy()
+        q = Matrix.identity(r.rows)
+        for j in range(r.cols):
+            v = r.col(j)
+            for i in range(j):
+                v[i][0] = 0
+            sign = 1 if r[j][j] >= 0 else -1
+            evclid = sum([r[i][j] ** 2 for i in range(j, r.rows)]) ** (1/2)
+            v[j][0] += sign * evclid
+            vt = v.transpose()
+            coef = 2.0 / (vt * v)[0][0]
+            h = Matrix.identity(r.rows) - (v * vt) * coef
+            q = q * h
+            r = h * r
+        return (q, r)
+
+    def eigen_qr(self, precision: float, tries: int = 1000
+                 ) -> List[complex]:
+        a = self.copy()
+        iters = 0
+        ress = []
+        while iters < tries:
+            res = []
+            iters += 1
+            q, r = a.qr()
+            a = r * q
+            j = 0
+            while j < a.cols:
+                sub = sum([a[i][j] ** 2
+                          for i in range(j + 1, a.rows)]) ** (1/2)
+                if sub <= precision:
+                    res.append(a[j][j])
+                    j += 1
+                else:
+                    b = -(a[j][j] + a[j+1][j+1])
+                    c = a[j][j] * a[j+1][j+1] - a[j][j+1] * a[j+1][j]
+                    d = b * b - 4 * c
+                    dsqrt = cm.sqrt(d)
+                    res.append((-b + dsqrt) / 2)
+                    res.append((-b - dsqrt) / 2)
+                    j += 2
+            ress.append(res)
+            if len(ress) > 3:
+                ress.pop(0)
+            done = len(ress) >= 3
+            if done:
+                for i in range(self.rows):
+                    if isinstance(ress[-1][i], complex):
+                        if ress[-1][i].imag == 0:
+                            done = False
+                            break
+                        if abs(ress[-1][i] - ress[-2][i]) > precision:
+                            done = False
+                            break
+                    else:
+                        if (abs(ress[-1][i] - ress[-2][i]) >
+                           abs(ress[-2][i] - ress[-3][i])):
+                            done = False
+                            break
+            if done:
+                break
+        print(f"{iters}: \n{a.str()}")
+        return ress[-1]
