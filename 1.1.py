@@ -10,7 +10,9 @@ a = Matrix([
 
 b = [-23, 39, -7, 30]
 
-print(f"solution: {s.solve_gauss(a, b).str()}")
+print(f"solution: \n{s.solve_gauss(a, b).str()}")
 
-print(f"determinant = {a.det()}")
-print(f"inverse matrix: {a.inverse().str()}")
+print(f"determinant = \n{a.det()}")
+inv = a.inverse()
+print(f"inverse matrix: \n{inv.str()}")
+print(f"proof   matrix: \n{(inv * a).str()}")

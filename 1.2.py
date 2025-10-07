@@ -12,4 +12,4 @@ mat = Matrix([
 
 right = [-58., 161, -114, -90, -55]
 
-print(f"solution: {s.solve_rerun(mat, right).str()}")
+print(f"solution: \n{s.solve_rerun(mat, right).str()}")
