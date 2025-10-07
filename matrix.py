@@ -332,5 +332,5 @@ class Matrix:
                             break
             if done:
                 break
-        print(f"{iters}: \n{a.str()}")
+        # print(f"{iters}: \n{a.str()}")
         return ress[-1]
