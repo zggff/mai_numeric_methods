@@ -51,9 +51,10 @@ def solve_simple_iter(left, right: List[float] | List[int],
             a[i][j] = - left[i][j] / left[i][i]
 
     a_abs = a.normc()
-    coef = a_abs / (1 - a_abs)
     if a_abs >= 1:
         coef = 1
+    else:
+        coef = a_abs / (1 - a_abs)
 
     x = b
     i = 0
@@ -90,9 +91,14 @@ def solve_zeidel(left, right: List[float] | List[int],
 
     c = a.upper().normc()
     a_abs = a.normc()
-    coef = c / (1 - a_abs)
     if a_abs >= 1:
         coef = 1
+    else:
+        coef = c / (1 - a_abs)
+
+    # coef = c / (1 - a_abs)
+    # if a_abs >= 1:
+    #     coef = 1
 
     x = b
     n = 0
