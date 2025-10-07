@@ -319,9 +319,6 @@ class Matrix:
             if done:
                 for i in range(self.rows):
                     if isinstance(ress[-1][i], complex):
-                        if ress[-1][i].imag == 0:
-                            done = False
-                            break
                         if abs(ress[-1][i] - ress[-2][i]) > precision:
                             done = False
                             break
