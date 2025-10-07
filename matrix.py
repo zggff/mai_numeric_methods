@@ -267,6 +267,7 @@ class Matrix:
             # print(f"{itern-1} [{t}]:{u.str(4)}{a.str(4)}\n")
             if t <= precision:
                 break
+        u0.transpose_self()
         return ([a[i][i] for i in range(a.rows)], u0, itern)
 
     def qr(self) -> Tuple[Matrix, Matrix]:
@@ -319,6 +320,9 @@ class Matrix:
             if done:
                 for i in range(self.rows):
                     if isinstance(ress[-1][i], complex):
+                        if (ress[-1][i].imag == 0):
+                            ress[-1][i] = ress[-1][i].real
+                            continue
                         if abs(ress[-1][i] - ress[-2][i]) > precision:
                             done = False
                             break
