@@ -15,7 +15,7 @@ import solutions as s
 """
 
 
-# %%
+# %% 1.1 gauss
 a = Matrix([
                 [1, 2, -1, -7],
                 [8,	0, -9, -3],
@@ -38,7 +38,7 @@ print(f"proof   matrix: \n{(inv * a).str()}")
 """
 
 
-# %%
+# %% 1.2 rerun
 a = Matrix([
                 [6, -5, 0, 0, 0],
                 [-6, 16, 9, 0, 0],
@@ -58,7 +58,7 @@ print(f"solution: \n{s.solve_rerun(a, b).str()}")
 """
 
 
-# %%
+# %% 1.3 simple iter and zeidel
 a = Matrix([
     [23, -6, -5, 9],
     [8, 22, -2, 5],
@@ -78,7 +78,7 @@ print(s.solve_zeidel(a, b, 0.01))
 """
 
 
-# %%
+# %% 1.4 rotation
 a = Matrix([
     [9, 2, -7],
     [2, -4, -1],
@@ -94,7 +94,7 @@ print(f"{n} {vals} \n{vectors.str()}")
 """
 
 
-# %%
+# %% 1.5 qr
 a = Matrix([
     [8, -1, -3],
     [-5, 9, -8],
