@@ -7,6 +7,7 @@ import numpy as np
 import sympy as sp
 from matplotlib import pyplot as plt
 import math
+import pandas as pd
 
 # %% [md]
 # ### Задание № 1
@@ -70,17 +71,24 @@ plt.show()
 # %%
 epsilon = 0.0001
 
-x0 = x_x_func((start + end) / 2)
-x1 = x0
+res = [x_x_func((start + end) / 2)]
 coef = q / (1 - q)
-epsilon_adjusted = epsilon / coef
-for i in range(10000):
-    x1 = x_x_func(x0)
-    if abs(x1 - x0) <= epsilon_adjusted:
+diff = []
+for k in range(10000):
+    res.append(x_x_func(res[-1]))
+    diff.append(coef * abs(res[-1] - res[-2]))
+    if abs(diff[-1]) <= epsilon:
         break
-    x0 = x1
 
-print(x1)
+data = {
+    'x': res,
+    'g(x)': res[1:],
+    'ε': diff,
+}
+
+df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+df = df.fillna("")
+df
 
 
 # %% [md]
@@ -111,15 +119,31 @@ plt.show()
 # %%
 epsilon = 0.0001
 
-x0 = end
-x1 = end
-for i in range(100000):
-    x1 = x0 - y_func(x0) / y_x_func(x0)
-    if abs(x1 - x0) < epsilon:
+res = [end]
+diff = []
+fx = []
+fxx = []
+sub = []
+for k in range(100000):
+    fx.append(y_func(res[-1]))
+    fxx.append(y_x_func(res[-1]))
+    sub.append(-fx[-1] / fxx[-1])
+    res.append(res[-1] + sub[-1])
+    diff.append(abs(res[-1] - res[-2]))
+    if diff[-1] < epsilon:
         break
-    x0 = x1
 
-print(x1)
+data = {
+    'x': res,
+    'f(x)': fx,
+    'f\'(x)': fxx,
+    '-f(x)/f\'(x)': sub,
+    'ε': diff,
+}
+
+df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+df = df.fillna("")
+df
 
 
 # %% [markdown]
