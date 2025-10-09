@@ -6,6 +6,7 @@
 import numpy as np
 import sympy as sp
 from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
 import math
 import pandas as pd
 
@@ -163,3 +164,111 @@ df
 # & x_1 - cos(x_2) = 1 \\
 # & x_2 - lg(x_1 + 1) = a
 # \end{align}
+
+
+# %% [md]
+# \begin{align}
+# & x_1 - cos(x_2) = 1 \\
+# & x_2 - lg(x_1 + 1) = 3
+# \end{align}
+# \begin{align}
+# & x_1 =  1 - cos(x_2) = \phi_1(x_1, x_2) \\
+# & x_2 = 3 - lg(x_1 + 1) = \phi_2(x_1,x_2)
+# \end{align}
+
+# %%
+x1, x2 = sp.symbols("x1 x2")
+phi1 = 1 - sp.cos(x2)
+phi2 = 3 - sp.log(x1 + 1, 10)
+
+
+# %%
+x1_s = 1.8
+x1_e = 1.9
+x2_s = 2.5
+x2_e = 2.6
+
+
+phi1_f = sp.lambdify(x2, phi1)
+phi2_f = sp.lambdify(x1, phi2)
+x1s = np.arange(1.5, 2.2, 0.1)
+x2s = np.arange(2.0, 3.0, 0.1)
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+plt.xlabel(x1)
+plt.ylabel(x2)
+rect1 = mpatches.Rectangle((x1_s, x2_s), x1_e - x1_s, x2_e - x2_s,
+                           color='blue', fc='none', lw=2)
+ax.add_patch(rect1)
+ax.plot(x1s, phi2_f(x1s), label="ϕ2(x1)")
+ax.plot(phi1_f(x2s), x2s, label="ϕ1(x2)")
+ax.legend()
+plt.show()
+
+# %% [md]
+# $ x_1 \in $ [{eval}`x1_s`; {eval}`x1_e`]
+
+# $ x_2 \in $ [{eval}`x2_s`; {eval}`x2_e`]
+
+# %% [md]
+# #### Метод простых итераций
+
+# %%
+phi1_diff = phi1.diff()
+phi2_diff = phi2.diff()
+
+phi1_diff_f = sp.lambdify(x2, phi1_diff)
+phi2_diff_f = sp.lambdify(x1, phi2_diff)
+
+q = 0.6
+
+plt.title("ϕ1'(x2)")
+plt.plot(x2s, phi1_diff_f(x2s))
+plt.plot(x2s, x2s * 0 + q)
+plt.vlines([x2_s, x2_e], 0, 3, linestyles='dashed', colors='blue',
+           label="границы")
+plt.grid(True)
+plt.show()
+
+plt.title("ϕ2'(x1)")
+plt.plot(x1s, phi2_diff_f(x1s))
+plt.plot(x1s, x1s * 0 - q)
+plt.grid(True)
+plt.vlines([x1_s, x1_e], -1, 3, linestyles='dashed', colors='blue',
+           label="границы")
+plt.show()
+
+# %% [md]
+# $ max||\phi'(x)|| \le $ {eval}`float(q)` $ = q < 1 $
+
+# %%
+epsilon = 0.0001
+
+res1 = [(x1_s + x1_e) / 2]
+res2 = [(x2_s + x2_e) / 2]
+diff = []
+coef = q/(1-q)
+for k in range(100000):
+    x1t = phi1_f(res2[-1])
+    x2t = phi2_f(res1[-1])
+    res1.append(x1t)
+    res2.append(x2t)
+    diff.append(coef * math.sqrt(
+        (res1[-1] - res1[-2]) ** 2 +
+        (res2[-1] - res2[-2]) ** 2
+    ))
+    if diff[-1] < epsilon:
+        break
+
+data = {
+    'x1': res1,
+    'x2': res2,
+    'ϕ1(x2)': res1[1:],
+    'ϕ2(x1)': res2[1:],
+    'ε': diff,
+}
+
+df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+df = df.fillna("")
+df
