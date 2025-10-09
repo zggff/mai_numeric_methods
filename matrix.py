@@ -165,6 +165,10 @@ class Matrix:
 
     def det(self) -> float:
         assert self.rows == self.cols
+        if self.rows == 1:
+            return self[0][0]
+        if self.rows == 2:
+            return self[0][0] * self[1][1] - self[0][1] * self[1][0]
         _, upper = self.lu()
         res = 1
         for i in range(self.cols):
