@@ -71,27 +71,27 @@ plt.show()
 
 
 # %%
-epsilon = 0.0001
+def iter(epsilon: float):
+    res = [x_x_func((start + end) / 2)]
+    coef = q / (1 - q)
+    diff = []
+    for k in range(10000):
+        res.append(x_x_func(res[-1]))
+        diff.append(coef * abs(res[-1] - res[-2]))
+        if abs(diff[-1]) <= epsilon:
+            break
 
-res = [x_x_func((start + end) / 2)]
-coef = q / (1 - q)
-diff = []
-for k in range(10000):
-    res.append(x_x_func(res[-1]))
-    diff.append(coef * abs(res[-1] - res[-2]))
-    if abs(diff[-1]) <= epsilon:
-        break
+    data = {
+        'x': res,
+        'g(x)': res[1:],
+        'ε': diff,
+    }
 
-data = {
-    'x': res,
-    'g(x)': res[1:],
-    'ε': diff,
-}
+    df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+    return df.fillna("")
 
-df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
-df = df.fillna("")
-df
 
+iter(0.0001)
 
 # %% [md]
 # #### метод ньютона
@@ -119,33 +119,34 @@ plt.show()
 
 
 # %%
-epsilon = 0.0001
+def newton(epsilon: float) -> pd.DataFrame:
+    res = [end]
+    diff = []
+    fx = []
+    fxx = []
+    sub = []
+    for k in range(100000):
+        fx.append(y_func(res[-1]))
+        fxx.append(y_x_func(res[-1]))
+        sub.append(-fx[-1] / fxx[-1])
+        res.append(res[-1] + sub[-1])
+        diff.append(abs(res[-1] - res[-2]))
+        if diff[-1] < epsilon:
+            break
 
-res = [end]
-diff = []
-fx = []
-fxx = []
-sub = []
-for k in range(100000):
-    fx.append(y_func(res[-1]))
-    fxx.append(y_x_func(res[-1]))
-    sub.append(-fx[-1] / fxx[-1])
-    res.append(res[-1] + sub[-1])
-    diff.append(abs(res[-1] - res[-2]))
-    if diff[-1] < epsilon:
-        break
+    data = {
+        'x': res,
+        'f(x)': fx,
+        'f\'(x)': fxx,
+        '-f(x)/f\'(x)': sub,
+        'ε': diff,
+    }
 
-data = {
-    'x': res,
-    'f(x)': fx,
-    'f\'(x)': fxx,
-    '-f(x)/f\'(x)': sub,
-    'ε': diff,
-}
+    df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+    return df.fillna("")
 
-df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
-df = df.fillna("")
-df
+
+newton(0.0001)
 
 
 # %% [markdown]
@@ -245,36 +246,37 @@ plt.show()
 # $ max||\phi'(x)|| \le $ {eval}`float(q)` $ = q < 1 $
 
 # %%
-epsilon = 0.0001
 
-r1 = [(x1_s + x1_e) / 2]
-r2 = [(x2_s + x2_e) / 2]
-diff = []
-coef = q/(1-q)
-for k in range(100000):
-    x1t = phi1_f(r2[-1])
-    x2t = phi2_f(r1[-1])
-    r1.append(x1t)
-    r2.append(x2t)
-    diff.append(coef * max(
-        abs(r1[-1] - r1[-2]),
-        abs(r2[-1] - r2[-2])
-    ))
-    if diff[-1] < epsilon:
-        break
+def iterSystem(epsilon: float) -> pd.DataFrame:
+    r1 = [(x1_s + x1_e) / 2]
+    r2 = [(x2_s + x2_e) / 2]
+    diff = []
+    coef = q/(1-q)
+    for k in range(100000):
+        x1t = phi1_f(r2[-1])
+        x2t = phi2_f(r1[-1])
+        r1.append(x1t)
+        r2.append(x2t)
+        diff.append(coef * max(
+            abs(r1[-1] - r1[-2]),
+            abs(r2[-1] - r2[-2])
+        ))
+        if diff[-1] < epsilon:
+            break
 
-data = {
-    'x1': r1,
-    'x2': r2,
-    'ϕ1(x2)': r1[1:],
-    'ϕ2(x1)': r2[1:],
-    'ε': diff,
-}
+    data = {
+        'x1': r1,
+        'x2': r2,
+        'ϕ1(x2)': r1[1:],
+        'ϕ2(x1)': r2[1:],
+        'ε': diff,
+    }
 
-df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
-df = df.fillna("")
-df
+    df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+    return df.fillna("")
 
+
+iterSystem(0.0001)
 # %% [md]
 # #### Метод Ньютона
 
@@ -298,69 +300,70 @@ f2_x2f = sp.lambdify((x1, x2), f2_x2)
 
 # %%
 
-epsilon = 0.000001
+
+def newtonSystem(epsilon: float) -> pd.DataFrame:
+    r1 = [(x1_s + x1_e) / 2]
+    r2 = [(x2_s + x2_e) / 2]
+
+    f1s = []
+    f2s = []
+    df11s = []
+    df12s = []
+    df21s = []
+    df22s = []
+    deta1 = []
+    deta2 = []
+    detj = []
+    diff = []
+
+    for k in range(100000):
+        f1s.append(f1f(r1[-1], r2[-1]))
+        f2s.append(f2f(r1[-1], r2[-1]))
+        df11s.append(f1_x1f(r1[-1], r2[-1]))
+        df12s.append(f1_x2f(r1[-1], r2[-1]))
+        df21s.append(f2_x1f(r1[-1], r2[-1]))
+        df22s.append(f2_x2f(r1[-1], r2[-1]))
+        a1 = Matrix([
+                [f1s[-1], df12s[-1]],
+                [f2s[-1], df22s[-1]]
+        ])
+        a2 = Matrix([
+                [df11s[-1], f1s[-1]],
+                [df21s[-1], f2s[-1]]
+        ])
+        j = Matrix([
+            [df11s[-1], df12s[-1]],
+            [df21s[-1], df22s[-1]]
+        ])
+        deta1.append(a1.det())
+        deta2.append(a2.det())
+        detj.append(j.det())
+        r1.append(r1[-1] - deta1[-1]/detj[-1])
+        r2.append(r2[-1] - deta2[-1]/detj[-1])
+        diff.append(max(
+            abs(r1[-1] - r1[-2]),
+            abs(r2[-1] - r2[-2])
+        ))
+        if diff[-1] < epsilon:
+            break
+
+    data = {
+        'x1': r1,
+        'x2': r2,
+        'f1(x1, x2)': f1s,
+        'f2(x1, x2)': f2s,
+        'd11': df11s,
+        'd21': df21s,
+        'd12': df12s,
+        'd22': df22s,
+        'det A1': deta1,
+        'det A2': deta2,
+        'det J': detj,
+        'ε': diff,
+    }
+
+    df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+    return df.fillna("")
 
 
-r1 = [(x1_s + x1_e) / 2]
-r2 = [(x2_s + x2_e) / 2]
-
-f1s = []
-f2s = []
-df11s = []
-df12s = []
-df21s = []
-df22s = []
-deta1 = []
-deta2 = []
-detj = []
-diff = []
-
-for k in range(100000):
-    f1s.append(f1f(r1[-1], r2[-1]))
-    f2s.append(f2f(r1[-1], r2[-1]))
-    df11s.append(f1_x1f(r1[-1], r2[-1]))
-    df12s.append(f1_x2f(r1[-1], r2[-1]))
-    df21s.append(f2_x1f(r1[-1], r2[-1]))
-    df22s.append(f2_x2f(r1[-1], r2[-1]))
-    a1 = Matrix([
-            [f1s[-1], df12s[-1]],
-            [f2s[-1], df22s[-1]]
-    ])
-    a2 = Matrix([
-            [df11s[-1], f1s[-1]],
-            [df21s[-1], f2s[-1]]
-    ])
-    j = Matrix([
-        [df11s[-1], df12s[-1]],
-        [df21s[-1], df22s[-1]]
-    ])
-    deta1.append(a1.det())
-    deta2.append(a2.det())
-    detj.append(j.det())
-    r1.append(r1[-1] - deta1[-1]/detj[-1])
-    r2.append(r2[-1] - deta2[-1]/detj[-1])
-    diff.append(max(
-        abs(r1[-1] - r1[-2]),
-        abs(r2[-1] - r2[-2])
-    ))
-    if diff[-1] < epsilon:
-        break
-
-data = {
-    'x1': r1,
-    'x2': r2,
-    'f1(x1, x2)': f1s,
-    'f2(x1, x2)': f2s,
-    'd11': df11s,
-    'd21': df21s,
-    'd12': df12s,
-    'd22': df22s,
-    'det A1': deta1,
-    'det A2': deta2,
-    'det J': detj,
-    'ε': diff,
-}
-
-df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
-df = df.fillna("")
-df
+newtonSystem(0.0001)
