@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches
 import math
 import pandas as pd
+from matrix import Matrix
 
 # %% [md]
 # ### Задание № 1
@@ -178,21 +179,21 @@ df
 
 # %%
 x1, x2 = sp.symbols("x1 x2")
-phi1 = 1 - sp.cos(x2)
-phi2 = 3 - sp.log(x1 + 1, 10)
+phi1 = 1 + sp.cos(x2)
+phi2 = 3 + sp.log(x1 + 1, 10)
 
 
 # %%
-x1_s = 1.8
-x1_e = 1.9
-x2_s = 2.5
-x2_e = 2.6
+x1_s = -0.1
+x1_e = 0.1
+x2_s = 2.9
+x2_e = 3.1
 
 
 phi1_f = sp.lambdify(x2, phi1)
 phi2_f = sp.lambdify(x1, phi2)
-x1s = np.arange(1.5, 2.2, 0.1)
-x2s = np.arange(2.0, 3.0, 0.1)
+x1s = np.arange(-0.5, 1, 0.01)
+x2s = np.arange(2.0, 4.0, 0.01)
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
@@ -221,23 +222,24 @@ phi2_diff = phi2.diff()
 phi1_diff_f = sp.lambdify(x2, phi1_diff)
 phi2_diff_f = sp.lambdify(x1, phi2_diff)
 
-q = 0.6
+q = 0.5
 
-plt.title("ϕ1'(x2)")
-plt.plot(x2s, phi1_diff_f(x2s))
+plt.title("|ϕ1'(x2)|")
+plt.plot(x2s, abs(phi1_diff_f(x2s)))
 plt.plot(x2s, x2s * 0 + q)
-plt.vlines([x2_s, x2_e], 0, 3, linestyles='dashed', colors='blue',
+plt.vlines([x2_s, x2_e], 0, 1, linestyles='dashed', colors='blue',
            label="границы")
 plt.grid(True)
 plt.show()
 
-plt.title("ϕ2'(x1)")
-plt.plot(x1s, phi2_diff_f(x1s))
-plt.plot(x1s, x1s * 0 - q)
+plt.title("|ϕ2'(x1)|")
+plt.plot(x1s, abs(phi2_diff_f(x1s)))
+plt.plot(x1s, x1s * 0 + q)
 plt.grid(True)
-plt.vlines([x1_s, x1_e], -1, 3, linestyles='dashed', colors='blue',
+plt.vlines([x1_s, x1_e], 0, 1, linestyles='dashed', colors='blue',
            label="границы")
 plt.show()
+
 
 # %% [md]
 # $ max||\phi'(x)|| \le $ {eval}`float(q)` $ = q < 1 $
@@ -245,27 +247,117 @@ plt.show()
 # %%
 epsilon = 0.0001
 
-res1 = [(x1_s + x1_e) / 2]
-res2 = [(x2_s + x2_e) / 2]
+r1 = [(x1_s + x1_e) / 2]
+r2 = [(x2_s + x2_e) / 2]
 diff = []
 coef = q/(1-q)
 for k in range(100000):
-    x1t = phi1_f(res2[-1])
-    x2t = phi2_f(res1[-1])
-    res1.append(x1t)
-    res2.append(x2t)
-    diff.append(coef * math.sqrt(
-        (res1[-1] - res1[-2]) ** 2 +
-        (res2[-1] - res2[-2]) ** 2
+    x1t = phi1_f(r2[-1])
+    x2t = phi2_f(r1[-1])
+    r1.append(x1t)
+    r2.append(x2t)
+    diff.append(coef * max(
+        abs(r1[-1] - r1[-2]),
+        abs(r2[-1] - r2[-2])
     ))
     if diff[-1] < epsilon:
         break
 
 data = {
-    'x1': res1,
-    'x2': res2,
-    'ϕ1(x2)': res1[1:],
-    'ϕ2(x1)': res2[1:],
+    'x1': r1,
+    'x2': r2,
+    'ϕ1(x2)': r1[1:],
+    'ϕ2(x1)': r2[1:],
+    'ε': diff,
+}
+
+df = pd.DataFrame({key: pd.Series(value) for key, value in data.items()})
+df = df.fillna("")
+df
+
+# %% [md]
+# #### Метод Ньютона
+
+# %%
+
+f1 = x1 - sp.cos(x2) - 1
+f2 = x2 - sp.log(x1 + 1, 10) - 3
+
+f1_x1 = f1.diff(x1)
+f1_x2 = f1.diff(x2)
+f2_x1 = f2.diff(x1)
+f2_x2 = f2.diff(x2)
+
+f1f = sp.lambdify((x1, x2), f1)
+f2f = sp.lambdify((x1, x2), f2)
+
+f1_x1f = sp.lambdify((x1, x2), f1_x1)
+f1_x2f = sp.lambdify((x1, x2), f1_x2)
+f2_x1f = sp.lambdify((x1, x2), f2_x1)
+f2_x2f = sp.lambdify((x1, x2), f2_x2)
+
+# %%
+
+epsilon = 0.000001
+
+
+r1 = [(x1_s + x1_e) / 2]
+r2 = [(x2_s + x2_e) / 2]
+
+f1s = []
+f2s = []
+df11s = []
+df12s = []
+df21s = []
+df22s = []
+deta1 = []
+deta2 = []
+detj = []
+diff = []
+
+for k in range(100000):
+    f1s.append(f1f(r1[-1], r2[-1]))
+    f2s.append(f2f(r1[-1], r2[-1]))
+    df11s.append(f1_x1f(r1[-1], r2[-1]))
+    df12s.append(f1_x2f(r1[-1], r2[-1]))
+    df21s.append(f2_x1f(r1[-1], r2[-1]))
+    df22s.append(f2_x2f(r1[-1], r2[-1]))
+    a1 = Matrix([
+            [f1s[-1], df12s[-1]],
+            [f2s[-1], df22s[-1]]
+    ])
+    a2 = Matrix([
+            [df11s[-1], f1s[-1]],
+            [df21s[-1], f2s[-1]]
+    ])
+    j = Matrix([
+        [df11s[-1], df12s[-1]],
+        [df21s[-1], df22s[-1]]
+    ])
+    deta1.append(a1.det())
+    deta2.append(a2.det())
+    detj.append(j.det())
+    r1.append(r1[-1] - deta1[-1]/detj[-1])
+    r2.append(r2[-1] - deta2[-1]/detj[-1])
+    diff.append(max(
+        abs(r1[-1] - r1[-2]),
+        abs(r2[-1] - r2[-2])
+    ))
+    if diff[-1] < epsilon:
+        break
+
+data = {
+    'x1': r1,
+    'x2': r2,
+    'f1(x1, x2)': f1s,
+    'f2(x1, x2)': f2s,
+    'd11': df11s,
+    'd21': df21s,
+    'd12': df12s,
+    'd22': df22s,
+    'det A1': deta1,
+    'det A2': deta2,
+    'det J': detj,
     'ε': diff,
 }
 
