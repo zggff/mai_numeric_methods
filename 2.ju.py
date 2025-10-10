@@ -10,6 +10,30 @@ import matplotlib.patches as mpatches
 import math
 import pandas as pd
 from matrix import Matrix
+from typing import Callable
+
+
+# %% [md]
+# зависимость от количества вычислений
+
+# %%
+def drawGraph(f: Callable[[float], pd.DataFrame],
+              g: Callable[[float], pd.DataFrame],
+              end: int = 10):
+    fs = []
+    gs = []
+    for precision in range(end):
+        epsilon = 1 / (10 ** precision)
+        fs.append(f(epsilon).shape[0])
+        gs.append(g(epsilon).shape[0])
+    plt.plot(range(end), fs, "r", label=f.__name__)
+    plt.plot(range(end), gs, "b", label=g.__name__)
+    plt.xticks(ticks=range(0, end, 2),
+               labels=[f"10^(-{p})" for p in range(0, end, 2)],
+               rotation=-45)
+    plt.legend()
+    plt.draw()
+
 
 # %% [md]
 # ### Задание № 1
@@ -75,7 +99,7 @@ def iter(epsilon: float):
     res = [x_x_func((start + end) / 2)]
     coef = q / (1 - q)
     diff = []
-    for k in range(10000):
+    for _ in range(10000):
         res.append(x_x_func(res[-1]))
         diff.append(coef * abs(res[-1] - res[-2]))
         if abs(diff[-1]) <= epsilon:
@@ -147,6 +171,13 @@ def newton(epsilon: float) -> pd.DataFrame:
 
 
 newton(0.0001)
+
+
+# %% [md]
+# зависимость количества итераций
+
+# %%
+drawGraph(iter, newton, end=20)
 
 
 # %% [markdown]
@@ -367,3 +398,10 @@ def newtonSystem(epsilon: float) -> pd.DataFrame:
 
 
 newtonSystem(0.0001)
+
+
+# %% [md]
+# зависимость количества итераций
+
+# %%
+drawGraph(iterSystem, newtonSystem, end=20)
