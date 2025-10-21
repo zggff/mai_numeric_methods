@@ -79,10 +79,10 @@ x_diff = x_x.diff()
 x_x_func = sp.lambdify(x, x_x)
 x_x_diff_func = sp.lambdify(x, x_diff)
 
-q = x_x_diff_func(1.6)
+q = x_x_diff_func(start)
 
 plt.plot(xs, x_x_diff_func(xs), 'r', label="g'(x)")
-plt.plot(xs, xs - xs + q, "k--")
+plt.plot(xs, xs - xs + q, "k--", label="q")
 plt.vlines([start, end], 0, 0.6, linestyles='dashed', colors='blue',
            label="границы")
 plt.xticks(xs)
@@ -91,7 +91,7 @@ plt.show()
 
 
 # %% [md]
-# q = {eval}`q`
+# q = {eval}`float(q)`
 
 
 # %%
@@ -254,20 +254,22 @@ phi2_diff = phi2.diff()
 phi1_diff_f = sp.lambdify(x2, phi1_diff)
 phi2_diff_f = sp.lambdify(x1, phi2_diff)
 
-q = 0.5
+q = abs(phi2_diff_f(x1_s))
 
 plt.title("|ϕ1'(x2)|")
-plt.plot(x2s, abs(phi1_diff_f(x2s)))
-plt.plot(x2s, x2s * 0 + q)
+plt.plot(x2s, abs(phi1_diff_f(x2s)), label="|ϕ1'(x2)|")
+plt.plot(x2s, x2s * 0 + q, label="q")
 plt.vlines([x2_s, x2_e], 0, 1, linestyles='dashed', colors='blue',
            label="границы")
 plt.grid(True)
+plt.legend()
 plt.show()
 
 plt.title("|ϕ2'(x1)|")
-plt.plot(x1s, abs(phi2_diff_f(x1s)))
-plt.plot(x1s, x1s * 0 + q)
+plt.plot(x1s, abs(phi2_diff_f(x1s)), label="|ϕ2'(x1)|")
+plt.plot(x1s, x1s * 0 + q, label="q")
 plt.grid(True)
+plt.legend()
 plt.vlines([x1_s, x1_e], 0, 1, linestyles='dashed', colors='blue',
            label="границы")
 plt.show()
