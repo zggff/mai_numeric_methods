@@ -5,6 +5,7 @@
 import numpy as np
 import pandas as pd
 import sympy as sp
+from matplotlib import pyplot as plt
 import math
 from typing import List
 import matrix as m
@@ -155,3 +156,62 @@ def spline(xs: List[float], fs: List[float], point: float):
 spline([-2.0, -1.0, 0.0, 1.0, 2.0],
        [0.13534, 0.36788, 1.0, 2.7183, 7.3891], -0.5)
 # spline([0.0, 1.0, 2.0, 3.0, 4.0], [0, 1.8415, 2.9093, 3.1411, 3.2432], 1.5)
+
+# %% [md]
+# ## 3
+# Для таблично заданной функции путем решения нормальной системы
+# МНК найти приближающие многочлены a) 1-ой  и б) 2-ой степени.
+# Для каждого из приближающих многочленов вычислить сумму квадратов
+# ошибок. Построить графики приближаемой функции и приближающих многочленов.
+
+# $x = -3.0, -2.0, -1.0, 0.0, 1.0, 2.0$
+
+# $y = 0.04979, 0.13534, 0.36788, 1.0, 2.7183, 7.3891$
+
+
+# %%
+def solve3(xs: List[float], ys: List[float]):
+    s = len(xs)
+    x_sums = [sum([x**i for x in xs]) for i in range(s)]
+    y_ress = [sum([ys[j] * xs[j] ** i for j in range(s)])
+              for i in range(s)]
+
+    first = m.Matrix([
+        [x_sums[0], x_sums[1], y_ress[0]],
+        [x_sums[1], x_sums[2], y_ress[1]]
+    ])
+    second = m.Matrix([
+        [x_sums[0], x_sums[1], x_sums[2], y_ress[0]],
+        [x_sums[1], x_sums[2], x_sums[3], y_ress[1]],
+        [x_sums[2], x_sums[3], x_sums[4], y_ress[2]]
+    ])
+
+    print(first.str(2))
+    print(second.str(2))
+
+    solved1 = first.gauss_transform().col(-1).vec()
+    solved2 = second.gauss_transform().col(-1).vec()
+
+    x = sp.Symbol("x")
+    appr1 = sp.UnevaluatedExpr(solved1[0] + solved1[1] * x)
+    appr2 = sp.UnevaluatedExpr(
+        solved2[0] + solved2[1] * x + solved2[2] * x * x)
+    f1 = sp.lambdify(x, appr1)
+    f2 = sp.lambdify(x, appr2)
+    print(f"Первое приближение: {appr1}")
+    print(f"ошибка: {sum([(f1(xs[i]) - ys[i]) ** 2 for i in range(s)])}")
+    print(f"Второе приближение: {appr2}")
+    print(f"ошибка: {sum([(f2(xs[i]) - ys[i]) ** 2 for i in range(s)])}")
+
+    plt.plot(xs, [f1(x) for x in xs], 'r', label="первое")
+    plt.plot(xs, [f2(x) for x in xs], 'g', label="второе")
+    plt.plot(xs, ys, "bo", label="исходное")
+    plt.legend()
+    plt.show()
+
+
+solve3([-3.0, -2.0, -1.0, 0.0, 1.0, 2.0],
+       [0.04979, 0.13534, 0.36788, 1.0, 2.7183, 7.3891])
+
+# solve3([0.0, 1.7, 3.4, 5.1, 6.8, 8.5],
+#        [0.0, 1.3038, 1.8439, 2.2583, 2.6077, 2.9155])
