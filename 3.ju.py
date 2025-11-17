@@ -5,9 +5,10 @@
 import numpy as np
 import pandas as pd
 import sympy as sp
+import scipy as sci
 from matplotlib import pyplot as plt
 import math
-from typing import List
+from typing import List, Callable
 import matrix as m
 
 # %% [md]
@@ -253,3 +254,55 @@ solve4([-0.2, 0.0, 0.2, 0.4, 0.6],
        [-0.20136, 0.0, 0.20136, 0.41152, 0.64350], 0.2)
 # solve4([0.0, 0.1, 0.2, 0.3, 0.4],
 #        [1.0, 1.1052, 1.2214, 1.3499, 1.4918], 0.2)
+
+
+# %% [md]
+# ## 5
+# Вычислить определенный интеграл
+# $F=\int_{X_0}^{X_1}{ydx}$,
+# методами прямоугольников, трапеций, Симпсона с
+# шагами $h_1, h_2$. Оценить погрешность вычислений,
+# используя  Метод Рунге-Ромберга-Ричардсона:
+
+# $y=\frac{x}{(2x+7)(3x+4)}$
+
+# $X_0 = -1, X_1 = 1, h_1 = 0.5, h_2 = 0.25$
+
+
+# %%
+def solvesub5(y: Callable[(float), float], x0: float, x1: float, h: float):
+    f_rec = h * sum([y(x + h / 2) for x in np.arange(x0, x1, h)])
+    f_trap = h * (y(x0)/2 + sum([y(x)
+                  for x in np.arange(x0+h, x1, h)]) + y(x1)/2)
+    f_sim = h/3 * (y(x0) + y(x1) +
+                   4 * sum([y(x) for x in np.arange(x0+h, x1, 2*h)]) +
+                   2 * sum([y(x) for x in np.arange(x0+2*h, x1, 2*h)]))
+    print(f"Прямоугольников с h = {h}: {f_rec}")
+    print(f"Трапеций с h = {h}: {f_trap}")
+    print(f"Симпсона с h = {h}: {f_sim}")
+    print()
+    return (f_rec, f_trap, f_sim)
+
+
+def runge(f1: float, f2: float, h1: float, h2: float) -> float:
+    return f1 + (f1-f2) / (math.pow(h2/h1, 10)-1)
+
+
+def solve5(y: Callable[(float), float],
+           x0: float, x1: float, h1: float, h2: float):
+    f_rec1, f_trap1, f_sim1 = solvesub5(y, x0, x1, h1)
+    f_rec2, f_trap2, f_sim2 = solvesub5(y, x0, x1, h2)
+    print("Рунге-Ромберга-Ричардсона:")
+    res, _ = sci.integrate.quad(y, x0, x1)
+    rec = runge(f_rec1, f_rec2, h1, h2)
+    trap = runge(f_trap1, f_trap2, h1, h2)
+    sim = runge(f_sim1, f_sim2, h1, h2)
+
+    print(f"точное: {res}")
+    print(f"Прямоугольников: {rec}, погрешность: {abs(res - rec)}")
+    print(f"Трапеций: {trap}, погрешность: {abs(res - trap)}")
+    print(f"Симпсона: {sim}, погрешность: {abs(res - sim)}")
+
+
+# solve5(lambda x: x / ((3 * x + 4) ** 2), -1, 1, 0.5, 0.25)
+solve5(lambda x: x / ((2 * x + 7) * (3 * x + 4)), -1, 1, 0.5, 0.25)
