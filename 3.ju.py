@@ -59,6 +59,14 @@ def lagrange_newton(xs: List[float], point: float, func):
                              (x-xs[0])*(x-xs[1])*ys3[0] +
                              (x-xs[0])*(x-xs[1])*(x-xs[2])*ys4[0]))
     nprecise = sp.lambdify(x, nx)(point)
+    newton = sp.lambdify(x, nx)
+    lagrange = sp.lambdify(x, lx)
+    xss = np.linspace(xs[0], xs[-1], 100)
+    plt.plot(xss, [newton(x) for x in xss], label="ньютон")
+    plt.plot(xss, [lagrange(x) for x in xss], label="лагранж")
+    plt.plot(xss, [func(x) for x in xss], label="target")
+    plt.legend()
+    plt.show()
     print("Ньютон: ")
     print(f"Интерполяционное: {nprecise}, Точное: {
         func(point)}, погрешность: {abs(func(point) - nprecise)}")
@@ -139,6 +147,19 @@ def spline(xs: List[float], fs: List[float], point: float):
     print(f"c_i:       {[float(f'{x:0.4f}') for x in c_s]}")
     print(f"d_i:       {[float(f'{x:0.4f}') for x in d_s]}")
 
+    x = sp.Symbol("x")
+
+    for i, a in enumerate(inte):
+        l, h = inte[i]
+        f = sp.UnevaluatedExpr(a_s[i] + b_s[i] * (x - l) + c_s[i] *
+                               (x - l) ** 2 + d_s[i] * (x - l) ** 3)
+        f1 = sp.lambdify(x, f)
+        inter = np.linspace(l, h, 100)
+        plt.plot(inter, [f1(x) for x in inter], label=f"[{l}; {h}]")
+
+    plt.legend()
+    plt.show()
+
     i = -1
     for j, a in enumerate(inte):
         l, h = a
@@ -146,7 +167,6 @@ def spline(xs: List[float], fs: List[float], point: float):
             i = j
             break
 
-    x = sp.Symbol("x")
     l, h = inte[i]
     f = sp.UnevaluatedExpr(a_s[i] + b_s[i] * (x - l) + c_s[i] *
                            (x - l) ** 2 + d_s[i] * (x - l) ** 3)
@@ -204,9 +224,11 @@ def solve3(xs: List[float], ys: List[float]):
     print(f"Второе приближение: {appr2}")
     print(f"ошибка: {sum([(f2(xs[i]) - ys[i]) ** 2 for i in range(s)])}")
 
+
+    plt.plot(xs, ys, "bo", label="исходное")
+    xs = np.linspace(xs[0], xs[-1], 100)
     plt.plot(xs, [f1(x) for x in xs], 'r', label="первое")
     plt.plot(xs, [f2(x) for x in xs], 'g', label="второе")
-    plt.plot(xs, ys, "bo", label="исходное")
     plt.legend()
     plt.show()
 
@@ -284,8 +306,8 @@ def solvesub5(y: Callable[(float), float], x0: float, x1: float, h: float):
     return (f_rec, f_trap, f_sim)
 
 
-def runge(f1: float, f2: float, h1: float, h2: float) -> float:
-    return f1 + (f1-f2) / (math.pow(h2/h1, 10)-1)
+def runge(f1: float, f2: float, h1: float, h2: float, p:float) -> float:
+    return f1 + (f1-f2) / (math.pow(h2/h1, p)-1)
 
 
 def solve5(y: Callable[(float), float],
@@ -294,9 +316,9 @@ def solve5(y: Callable[(float), float],
     f_rec2, f_trap2, f_sim2 = solvesub5(y, x0, x1, h2)
     print("Рунге-Ромберга-Ричардсона:")
     res, _ = sci.integrate.quad(y, x0, x1)
-    rec = runge(f_rec1, f_rec2, h1, h2)
-    trap = runge(f_trap1, f_trap2, h1, h2)
-    sim = runge(f_sim1, f_sim2, h1, h2)
+    rec = runge(f_rec1, f_rec2, h1, h2, 2)
+    trap = runge(f_trap1, f_trap2, h1, h2, 2)
+    sim = runge(f_sim1, f_sim2, h1, h2, 4)
 
     print(f"точное: {res}")
     print(f"Прямоугольников: {rec}, погрешность: {abs(res - rec)}")
