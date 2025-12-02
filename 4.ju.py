@@ -97,6 +97,33 @@ def runge_kutte(h: float = 0.1, y0=[1, 1], x0=0,
     return y[:, 0]
 
 
+def runge_kutte_better(h: float = 0.1, y0=[1, 1], x0=0,
+                       x1=1, f=f1) -> np.array:
+    x = np.arange(x0, x1 + h, h)
+    y = np.zeros((len(x), 2))
+    y[0] = y0
+    for k in range(len(x)-1):
+        k1 = h * f(x[k], y[k])
+        k2 = h * f(x[k] + h/2, y[k] + (1/2)*k1)
+        k3 = h * f(x[k] + h/2, y[k] + (1/2)*k2)
+        k4 = h * f(x[k] + h, y[k] + k3)
+        y[k+1] = y[k] + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
+    return y
+
+
+def adams(h: float = 0.1, y0=[1, 1], x0=0, x1=1, f=f1) -> np.array:
+    x = np.arange(x0, x1 + h, h)
+    y = np.zeros((len(x), 2))
+    y[0:4] = runge_kutte_better(h, y0, x0, x1, f)[0:4]
+    for k in range(3, len(x)-1):
+        fk = f(x[k], y[k])
+        fk1 = f(x[k-1], y[k-1])
+        fk2 = f(x[k-2], y[k-2])
+        fk3 = f(x[k-3], y[k-3])
+        y[k+1] = y[k] + h/24 * (55 * fk - 59 * fk1 + 37 * fk2 - 9 * fk3)
+    return y[:, 0]
+
+
 def runge_romberg(method: Callable[[float], np.array],
                   h: float,
                   p: int,
@@ -129,6 +156,11 @@ df["runge"] = runge_kutte(h)
 df["runge_abs"] = np.abs(df["prec"] - df["runge"])
 df["runge_rr"] = runge_romberg(runge_kutte, h, 4)
 
+df["adams"] = adams(h)
+df["adams_abs"] = np.abs(df["prec"] - df["adams"])
+df["adams_rr"] = runge_romberg(adams, h, 4)
+
+
 df
 
 # %%
@@ -138,6 +170,7 @@ plt.plot(df["x"], df["euler"], label="Эйлер")
 plt.plot(df["x"], df["koshi"], label="Эйлер-Коши")
 plt.plot(df["x"], df["better"], label="первый улучшенный Эйлер")
 plt.plot(df["x"], df["runge"], label="Рунге-Кутте")
+plt.plot(df["x"], df["adams"], label="Адамс")
 plt.legend()
 
 # %% [md]
@@ -177,11 +210,11 @@ def runge_kutte_lp(n: int = 10, y0=[1, 1], x0=0,
     y[0] = y0
     for k in range(len(x)-1):
         h = x[k+1]-x[k]
-        k1 = f(x[k], y[k])
-        k2 = f(x[k] + h/2, y[k] + (h/2)*k1)
-        k3 = f(x[k] + h/2, y[k] + (h/2)*k2)
-        k4 = f(x[k] + h, y[k] + h*k3)
-        y[k+1] = y[k] + (h/6)*(k1 + 2*k2 + 2*k3 + k4)
+        k1 = h * f(x[k], y[k])
+        k2 = h * f(x[k] + h/2, y[k] + (1/2)*k1)
+        k3 = h * f(x[k] + h/2, y[k] + (1/2)*k2)
+        k4 = h * f(x[k] + h, y[k] + k3)
+        y[k+1] = y[k] + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
     return y[:, 0]
 
 
@@ -199,7 +232,6 @@ def runge_romberg_lp(method: Callable[[float], np.array],
 
 # %%
 N = 40
-h = 0.1
 targ = - np.sqrt(3) / 3
 end = math.pi / 6
 
