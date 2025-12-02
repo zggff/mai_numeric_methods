@@ -44,10 +44,6 @@ def f1(x, y):
     return np.array([y2, -4*x*y2 - (4*x**2 + 2)*y1])
 
 
-h = 0.1
-
-
-# %%
 def precise(h: float = 0.1) -> np.array:
     @np.vectorize
     def y(x: float) -> float:
@@ -71,10 +67,8 @@ def euler_koshi(h: float = 0.1, y0=[1, 1], x0=0,
     y = np.zeros((len(x), 2))
     y[0] = y0
     for k in range(len(x)-1):
-        k1 = f(x[k], y[k])
-        y_mid = y[k] + (h/2)*k1
-        k_mid = f(x[k] + h/2, y_mid)
-        y[k+1] = y[k] + h * k_mid
+        yk = y[k] + h * f(x[k], y[k])
+        y[k+1] = y[k] + h * (f(x[k], y[k]) + f(x[k+1], yk)) / 2
     return y[:, 0]
 
 
@@ -84,10 +78,8 @@ def euler_better(h: float = 0.1, y0=[1, 1], x0=0,
     y = np.zeros((len(x), 2))
     y[0] = y0
     for k in range(len(x)-1):
-        k1 = f(x[k], y[k])
-        y_pred = y[k] + h * k1
-        k2 = f(x[k] + h, y_pred)
-        y[k+1] = y[k] + (h/2)*(k1 + k2)
+        yk = y[k] + h/2 * f(x[k], y[k])
+        y[k+1] = y[k] + h * f(x[k] + h/2, yk)
     return y[:, 0]
 
 
@@ -97,11 +89,11 @@ def runge_kutte(h: float = 0.1, y0=[1, 1], x0=0,
     y = np.zeros((len(x), 2))
     y[0] = y0
     for k in range(len(x)-1):
-        k1 = f(x[k], y[k])
-        k2 = f(x[k] + h/2, y[k] + (h/2)*k1)
-        k3 = f(x[k] + h/2, y[k] + (h/2)*k2)
-        k4 = f(x[k] + h, y[k] + h*k3)
-        y[k+1] = y[k] + (h/6)*(k1 + 2*k2 + 2*k3 + k4)
+        k1 = h * f(x[k], y[k])
+        k2 = h * f(x[k] + h/2, y[k] + (1/2)*k1)
+        k3 = h * f(x[k] + h/2, y[k] + (1/2)*k2)
+        k4 = h * f(x[k] + h, y[k] + k3)
+        y[k+1] = y[k] + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
     return y[:, 0]
 
 
@@ -117,12 +109,13 @@ def runge_romberg(method: Callable[[float], np.array],
     return np.abs(runge)
 
 
+h = 0.1
 pd.set_option("display.precision", 3)
 df = pd.DataFrame({"x": np.arange(0, 1 + h, h)})
 df["prec"] = precise(h)
 df["euler"] = euler_apparent(h)
 df["euler_abs"] = np.abs(df["prec"] - df["euler"])
-df["euler_rr"] = runge_romberg(euler_apparent, h, 2)
+df["euler_rr"] = runge_romberg(euler_apparent, h, 1)
 
 df["koshi"] = euler_koshi(h)
 df["koshi_abs"] = np.abs(df["prec"] - df["koshi"])
@@ -136,7 +129,6 @@ df["runge"] = runge_kutte(h)
 df["runge_abs"] = np.abs(df["prec"] - df["runge"])
 df["runge_rr"] = runge_romberg(runge_kutte, h, 4)
 
-# %%
 df
 
 # %%
@@ -311,3 +303,11 @@ df["end"] = solve_rerun(mat, d)
 df["end_abs"] = np.abs(df["y"] - df["end"])
 df["end_rr"] = runge_romberg_lp(shoot, N, 2)
 df
+
+
+# %%
+plt.subplot()
+plt.plot(df["x"], df["y"], label="точное")
+plt.plot(df["x"], df["end"], label="конечное")
+plt.plot(df["x"], df["shoot"], label="стрельбы")
+plt.legend()
